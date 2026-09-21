@@ -1,15 +1,26 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # tasks file for roles/docker
-    
-- name: Installer NGINX
-  ansible.builtin.package:
-      name: nginx
-      state: present
-      
+
+- name: Créer le dossier du projet
+  ansible.builtin.file:
+      path: "{{ app_dir }}/html"
+      state: directory
+      mode: "0755"
+
+- name: Déployer le docker-compose.yml
+  ansible.builtin.template:
+      src: docker-compose.yml.j2
+      dest: "{{ app_dir }}/docker-compose.yml"
+      mode: "0644"
+
+- name: Déployer la page d'accueil
+  ansible.builtin.template:
+      src: index.html.j2
+      dest: "{{ app_dir }}/html/index.html"
+      mode: "0644"
 
 - name: Assurer que nginx tourne
-  ansible.builtin.service:
-      name: nginx
-      state: started
-      enabled: true
+  community.docker.docker_compose_v2:
+      project_src: "{{ app_dir }}"
+      state: present
