@@ -1,0 +1,48 @@
+# docker-compose.yml — images officielles Docker Hub
+services:
+  nginx:                                                # [SERVICE] reverse proxy + TLS
+    image: nginx:stable-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro              # [VOLUME] config statique versionnée
+      - certs:/etc/nginx/certs:ro                        # [VOLUME] certificats TLS
+    depends_on:
+      - wordpress
+    networks: [app_net]                                  # [RESEAU]
+    restart: unless-stopped
+
+  wordpress:                                             # [SERVICE] CMS
+    image: wordpress:php8.2-apache
+    env_file: .env                                       # [VARIABLE] secrets injectés par Ansible
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+    volumes:
+      - wp_data:/var/www/html                            # [VOLUME] thèmes, plugins, uploads
+    depends_on:
+      mysql:
+        condition: service_healthy                       # attend que MySQL accepte vraiment les connexions
+    networks: [app_net]
+    restart: unless-stopped
+
+  mysql:                                                 # [SERVICE] base de données
+    image: mysql:8.0
+    env_file: .env
+    volumes:
+      - db_data:/var/lib/mysql                           # [VOLUME] persistance
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks: [app_net]
+    restart: unless-stopped
+
+networks:
+  app_net:                                                # les 3 services se joignent par nom de service
+
+volumes:
+  wp_data:
+  db_data:
+  certs:
