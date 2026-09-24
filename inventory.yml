@@ -3,8 +3,4 @@ all:
         vm:
           hosts:
             cloud:
-              ansible_host: 10.171.54.12
-          
-        webservers:
-            hosts:
-                cloud:
+              ansible_host: 10.171.62.21

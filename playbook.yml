@@ -1,25 +1,38 @@
-- name: Config VM
-  hosts: vm
-  become: true
-  gather_facts: false
-  tasks:
-    - name: Installer Docker et le plugin compose
-      ansible.builtin.apt:
-          name:
-            - docker.io
-            - docker-compose-v2
-          state: present
-          update_cache: true
-
-    - name: Assurer que docker tourne
-      ansible.builtin.systemd:
-          name: docker
-          state: started
-          enabled: true
-
-- name: Configurer le seveur
-  hosts: webservers
+- name: Cloud Instance
+  hosts: cloud
   become: true
   gather_facts: false
   roles:
-    - nginx_basique
+    - docker
+    - mysql
+    - wordpress
+    - nginx
+ 
+ 
+# - name: Config VM
+#   hosts: vm
+#   become: true
+#   gather_facts: false
+#   roles:
+#     - vm
+
+# - name: Config Docker
+#   hosts: docker
+#   become: true
+#   gather_facts: false
+#   roles:
+#     - docker
+
+# - name: Configurer le seveur
+#   hosts: webservers
+#   become: true
+#   gather_facts: false
+#   roles:
+#     - nginx_basique
+
+# - name: Configurer SQL
+#   hosts: db
+#   become: true
+#   gather_facts: false
+#   roles:
+#     - mysql
