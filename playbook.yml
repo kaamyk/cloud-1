@@ -1,20 +1,38 @@
-- name: Config VM
-  hosts: vm
+- name: Cloud Instance
+  hosts: cloud
   become: true
   gather_facts: false
   roles:
     - docker
-
-- name: Configurer le seveur
-  hosts: webservers
-  become: true
-  gather_facts: false
-  roles:
-    - nginx_basique
-
-- name: Configurer SQL
-  hosts: db
-  become: true
-  gather_facts: false
-  roles:
     - mysql
+    - wordpress
+    - nginx
+ 
+ 
+# - name: Config VM
+#   hosts: vm
+#   become: true
+#   gather_facts: false
+#   roles:
+#     - vm
+
+# - name: Config Docker
+#   hosts: docker
+#   become: true
+#   gather_facts: false
+#   roles:
+#     - docker
+
+# - name: Configurer le seveur
+#   hosts: webservers
+#   become: true
+#   gather_facts: false
+#   roles:
+#     - nginx_basique
+
+# - name: Configurer SQL
+#   hosts: db
+#   become: true
+#   gather_facts: false
+#   roles:
+#     - mysql

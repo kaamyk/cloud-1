@@ -23,3 +23,9 @@
       name: docker
       state: started
       enabled: true
+
+- name: Creer le reseau
+  community.docker.docker_network:
+    name: app_net
+    # connected: []
+    # certif

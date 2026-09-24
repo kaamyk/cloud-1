@@ -4,7 +4,3 @@ all:
           hosts:
             cloud:
               ansible_host: 10.171.62.21
-          
-        webservers:
-            hosts:
-                cloud:

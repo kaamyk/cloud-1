@@ -1,3 +1,26 @@
-- name: Install SQL
-  ansible.Mysql:
+- name: Push SQL config
+  ansible.builtin.template:
+    src: my.cnf.j2
+    dest: /etc/mysql/my.cnf #Creer ce fichier
     
+- name: Push SQL init
+  ansible.builtin.template:
+    src: init.sql.j2
+    dest: /
+      
+- name: Install SQL
+  community.docker.docker_container:
+    name: mysql
+    image: mysql:9.0
+    networks:
+      - name: app_net
+    volumes:
+      - db_data:{{ data_dir }}
+    vars_files:
+      - ../vars/secret.yml
+    env:
+      MYSQL_ROOT_PASSWORD: "{{ vault_mysql_root_password }}"
+      MYSQL_DATABASE: "{{ vault_mysql_database }}"
+      MYSQL_USER:  "{{ vault_mysql_user }}"
+      MYSQL_PASSWORD: "{{ vault_mysql_user_password }}"
+    restart_policy: unless-stopped
