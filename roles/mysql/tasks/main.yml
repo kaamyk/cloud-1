@@ -1,7 +1,13 @@
+- name: Creer dossier config MySQL
+  ansible.builtin.file:
+    path: /opt/app/mysql/conf.d
+    state: directory
+    mode: "0755"
+
 - name: Push SQL config
   ansible.builtin.template:
     src: my.cnf.j2
-    dest: /etc/mysql/my.cnf #Creer ce fichier
+    dest: /opt/app/mysql/conf.d/my.cnf
     
 - name: Push SQL init
   ansible.builtin.template:
@@ -16,8 +22,7 @@
       - name: app_net
     volumes:
       - db_data:{{ data_dir }}
-    vars_files:
-      - ../vars/secret.yml
+      - /opt/app/mysql/conf.d:/etc/mysql/conf.d:ro
     env:
       MYSQL_ROOT_PASSWORD: "{{ vault_mysql_root_password }}"
       MYSQL_DATABASE: "{{ vault_mysql_database }}"

@@ -1,12 +1,14 @@
-- name: Wait for MySQL
-  ansible.builtin.wait_for:
-    host: cloud
-    port: 3306
-    connect_timeout: 5 #Default
-    delay: 2
-    timeout: 30
+- name: WORDPRESS - Wait for MySQL
+  become: true
+  ansible.builtin.command:
+    cmd: docker exec mysql mysqladmin ping -h localhost
+  register: mysql_ready
+  until: mysql_ready.rc == 0
+  retries: 10
+  delay: 3
+  changed_when: false
 
-- name: Lancer WordPress
+- name: WORDPRESS - Lancer le conteneur
   community.docker.docker_container:
     name: wordpress
     image: wordpress:7.1-php8.2-apache
@@ -18,4 +20,3 @@
       WORDPRESS_DB_HOST: "{{ vault_mysql_database }}"
       WORDPRESS_SB_USER: "{{ vault_mysql_user }}"
       WORDPRESS_DB_PASSWORD: "{{ vault_mysql_user_password }}"
-      

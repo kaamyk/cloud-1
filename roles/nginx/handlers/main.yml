@@ -1,3 +1,9 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # handlers file for roles/docker
+
+- name: NGINX - Reload
+  ansible.builtin.systemd:
+    name: nginx
+    state: reloaded
+  listen: "Relance nginx"

@@ -1,24 +1,72 @@
-#SPDX-License-Identifier: MIT-0
----
-# tasks file for roles/docker
+- name: NGINX - Install packages
+  ansible.builtin.apt:
+    name:
+      - openssl
+      - nginx
+      - php-fpm
 
-- name: Créer le dossier du projet
+- name: NGINX - Créer le dossier du projet
   ansible.builtin.file:
-      path: "{{ app_dir }}/html"
+      path: "{{ app_dir }}"
       state: directory
       mode: "0755"
 
-- name: Déployer le docker-compose.yml
-  ansible.builtin.template:
-      src: docker-compose.yml.j2
-      dest: "{{ app_dir }}/docker-compose.yml"
-      mode: "0644"
+- name: NGINX - Create ssl repository
+  ansible.builtin.file:
+    path: "{{ app_dir }}/ssl"
+    state: directory
+    mode: "0755"
 
-- name: Déployer la page d'accueil
+- name: NGINX - Create data repository
+  ansible.builtin.file:
+    path: "{{ app_dir }}/data"
+    state: directory
+    mode: "0755"
+  notify: Relance nginx
+
+# - name: NGINX - chown data directory
+#   ansible.builtin.command:
+#     cmd: chowm -R www-data:www-data {{ app_dir }}/data
+    
+- name: NGINX - Create certif
+  ansible.builtin.command:
+    cmd: openssl req -x509 -nodes -out {{ app_dir }}/ssl/cloud-1.key -subj "/CN=cloud-1"
+
+- name: NGINX - Create conf dir
+  ansible.builtin.file:
+    path: "{{ app_dir }}/nginx/conf.d"
+    state: directory
+  notify: Relance nginx
+
+- name: NGINX - Push config
   ansible.builtin.template:
-      src: index.html.j2
-      dest: "{{ app_dir }}/html/index.html"
-      mode: "0644"
+    src: nginx.conf.j2
+    dest: /etc/nginx/conf.d/
+
+- name: NGINX - Lancer le conteneur
+  community.docker.docker_container:
+    name: nginx
+    image: nginx:stable-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - "{{ app_dir }}/nginx/conf.d:/etc/nginx/condf.d:ro"
+    networks:
+      - name: app_net
+    restart_policy: unless-stopped
+    
+
+# - name: Déployer le docker-compose.yml
+#   ansible.builtin.template:
+#       src: docker-compose.yml.j2
+#       dest: "{{ app_dir }}/docker-compose.yml"
+#       mode: "0644"
+
+# - name: Déployer la page d'accueil
+#   ansible.builtin.template:
+#       src: index.html.j2
+#       dest: "{{ app_dir }}/html/index.html"
+#       mode: "0644"
 
 - name: Assurer que nginx tourne
   community.docker.docker_compose_v2:

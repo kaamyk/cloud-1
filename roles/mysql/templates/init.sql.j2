@@ -1,9 +1,9 @@
-USE mysql;
-ALTER USER 'root'@'localhost' IDENTIFIED BY 'MYSQL_ROOT_PASSWORD';
+USE {{ vault_mysql_user }};
+ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ vault_mysql_root_password }}';
 FLUSH PRIVILEGES;
-CREATE DATABASE if NOT EXISTS $MYSQL_DATABASE;
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';
+CREATE DATABASE if NOT EXISTS {{ vault_mysql_user }};
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '{{ vault_mysql_root_password }}';
 FLUSH PRIVILEGES;
-CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
-GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%';
+CREATE USER IF NOT EXISTS '{{ vault_mysql_user }}'@'%' IDENTIFIED BY '{{ vault_mysql_user_password }}';
+GRANT ALL PRIVILEGES ON {{ vault_mysql_database }}.* TO '{{ vault_mysql_user }}'@'%';
 FLUSH PRIVILEGES;
