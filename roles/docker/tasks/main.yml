@@ -1,10 +1,10 @@
-- name : Check apt
+- name : DOCKER - Check apt
   ansible.builtin.apt:
     name:
       - python3-apt
       - aptitude
 
-- name: Installer Docker et le plugin compose
+- name: DOCKER - Installer Docker et le plugin compose
   ansible.builtin.apt:
       name:
         - ca-certificates
@@ -18,14 +18,15 @@
       update_cache: true
       auto_install_module_deps: true
 
-- name: Assurer que docker tourne
+- name: DOCKER - Assurer que docker tourne
   ansible.builtin.systemd:
       name: docker
       state: started
       enabled: true
 
-- name: Creer le reseau
+- name: DOCKER - Creer le reseau
   community.docker.docker_network:
     name: app_net
-    # connected: []
-    # certif
+    driver: bridge
+    state: present
+  register: network
