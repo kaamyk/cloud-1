@@ -24,6 +24,7 @@
 - name: NGINX - Create certif
   ansible.builtin.command:
     cmd: openssl req -x509 -nodes -out {{ app_dir }}/ssl/cloud-1.cert -subj "/CN=cloud-1" -keyout {{ app_dir }}/ssl/cloud-1.key
+    creates: "{{ app_dir }}/ssl/cloud-1.cert"
 
 - name: NGINX - Create conf dir
   ansible.builtin.file:
@@ -43,8 +44,10 @@
     image: nginx:stable-alpine
     ports:
       - "80:80"
-    # volumes:
-    #   - "{{ app_dir }}/nginx/conf.d:/etc/nginx/conf.d:ro"
+      - "443:443"
+    volumes:
+      - "{{ app_dir }}/nginx/conf.d:/etc/nginx/conf.d:ro"
+      - "{{ app_dir }}/ssl:/etc/nginx/ssl:ro"
     networks:
       - name: app_net
     restart_policy: unless-stopped
