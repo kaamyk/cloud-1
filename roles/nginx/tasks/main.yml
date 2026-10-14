@@ -2,8 +2,6 @@
   ansible.builtin.apt:
     name:
       - openssl
-      - nginx
-      - php-fpm
 
 - name: NGINX - Créer le dossier du projet
   ansible.builtin.file:
@@ -22,22 +20,22 @@
     path: "{{ app_dir }}/data"
     state: directory
     mode: "0755"
-  notify: Relance nginx
 
 - name: NGINX - Create certif
   ansible.builtin.command:
-    cmd: openssl req -x509 -nodes -out {{ app_dir }}/ssl/cloud-1.key -subj "/CN=cloud-1"
+    cmd: openssl req -x509 -nodes -out {{ app_dir }}/ssl/cloud-1.cert -subj "/CN=cloud-1" -keyout {{ app_dir }}/ssl/cloud-1.key
 
 - name: NGINX - Create conf dir
   ansible.builtin.file:
     path: "{{ app_dir }}/nginx/conf.d"
     state: directory
-  notify: Relance nginx
 
 - name: NGINX - Push config
   ansible.builtin.template:
     src: nginx.conf.j2
-    dest: /etc/nginx/conf.d/
+    dest: "{{ app_dir }}/nginx/conf.d/default.conf"
+    mode: "0644"
+  notify: NGINX - Reload
 
 - name: NGINX - Lancer le conteneur
   community.docker.docker_container:
@@ -45,8 +43,8 @@
     image: nginx:stable-alpine
     ports:
       - "80:80"
-    volumes:
-      - "{{ app_dir }}/nginx/conf.d:/etc/nginx/conf.d:ro"
+    # volumes:
+    #   - "{{ app_dir }}/nginx/conf.d:/etc/nginx/conf.d:ro"
     networks:
       - name: app_net
     restart_policy: unless-stopped

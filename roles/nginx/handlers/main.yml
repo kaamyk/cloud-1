@@ -3,7 +3,6 @@
 # handlers file for roles/docker
 
 - name: NGINX - Reload
-  ansible.builtin.systemd:
-    name: nginx
-    state: reloaded
-  listen: "Relance nginx"
+  community.docker.docker_container_exec:
+    container: nginx
+    command: nginx -s reload
