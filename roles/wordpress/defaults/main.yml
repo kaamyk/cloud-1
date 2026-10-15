@@ -1,0 +1,4 @@
+wp_url: "http://{{ ansible_host }}"
+wp_title: "Cloud-1"
+wp_home_title: "Accueil"
+wp_home_content: "<p>Bienvenue sur Cloud-1.</p>"

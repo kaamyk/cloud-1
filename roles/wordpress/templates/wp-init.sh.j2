@@ -1,0 +1,49 @@
+#!/bin/bash
+
+mkdir /var/www/
+mkdir /var/www/html
+
+cd /var/www/html
+
+MARIADB_HOST=${MARIADB_HOST:-mariadb}
+echo ">>> host => $MARIADB_HOST <<<"
+MARIADB_IP=$(getent hosts $MARIADB_HOST | awk '{ print $1 }')
+echo ">>> host => $MARIADB_IP <<<"
+echo "$MARIADB_IP $MARIADB_HOST" >> /etc/hosts
+exec 2>&1
+
+curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+chmod +x wp-cli.phar
+mv wp-cli.phar /usr/local/bin/wp
+
+wp core download --allow-root
+
+wp config create --dbname=$MARIADB_DATABASE --dbhost=$WORDPRESS_DB_HOST --dbuser=$WORDPRESS_DB_USER --dbpass=$MARIADB_PASSWORD \
+                --allow-root --skip-check
+
+echo '-----------------'
+cat /var/www/html/wp-config.php
+echo '-----------------'
+until wp db check --path=/var/www/html --allow-root; do
+        echo "Waiting for MySQL..."
+        sleep 1
+    done
+
+wp core install --url=$DOMAIN_NAME/ --title=$WORDPRESS_TITLE \
+                --admin_user=$WORDPRESS_ADMIN_NAME --admin_password=$WORDPRESS_ADMIN_PW \
+                --admin_email=$WORDPRESS_ADMIN_EMAIL --skip-email --allow-root
+
+wp user create $WORDPRESS_DB_USER $WORDPRESS_USER_EMAIL --role=subscriber --user_pass=$WORDPRESS_USER_PW \
+                                    --allow-root
+
+echo '-----------------'
+cat /var/www/html/wp-config.php
+echo '-----------------'
+
+wp theme install twentytwentythree --activate --allow-root
+
+# echo '==== ls /etc/www/html ===='
+# ls /var/www/html
+# echo '=========================='
+
+exec /usr/sbin/php-fpm7.4 -F
