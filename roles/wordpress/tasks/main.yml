@@ -2,7 +2,7 @@
   ansible.builtin.command:
     cmd: docker exec mysql mysqladmin ping -h localhost
   register: mysql_ready
-  until: mysql_ready.rc == 0
+  until: mysql_ready.rc==0
   retries: 10
   delay: 3
   changed_when: false
@@ -31,34 +31,49 @@
   ansible.builtin.command:
     cmd: docker exec wordpress test -f /var/www/html/wp-config.php
   register: wp_file_ready
-  until: wp_file_ready.rc == 0
+  until: wp_file_ready.rc==0
   retries: 10
   delay: 3
   changed_when: false
 
+- name:  WORDPRESS - Prepare wp-cli command
+  ansible.builtin.set_fact:
+    wp_cli: >-
+      docker run --rm --user 33:33 --network app_net -v wp_data:/var/www/html
+      -e WORDPRESS_DB_HOST=mysql -e WORDPRESS_DB_NAME={{ vault_mysql_database | quote }}
+      -e WORDPRESS_DB_USER={{ vault_mysql_user | quote }}
+      -e WORDPRESS_DB_PASSWORD={{ vault_mysql_user_password | quote }}
+      wordpress:cli wp 
+  no_log: true
+  
 - name: WORDPRESS - Check installation
   ansible.builtin.command:
-    cmd: >-
-      docker run --rm --user 33:33 --network app_net -v wp_data:/var/www/html
-      -e WORDPRESS_DB_HOST=mysql -e WORDPRESS_DB_NAME={{ vault_mysql_database }}
-      -e WORDPRESS_DB_USER={{ vault_mysql_user }}
-      -e WORDPRESS_DB_PASSWORD={{ vault_mysql_user_password }}
-      wordpress:cli wp core is-installed
+    cmd: "{{ wp_cli }} core is-installed"
   register: wp_installed
   failed_when: wp_installed.rc not in [0, 1]
   changed_when: false
   no_log: true
 
+
 - name: WORDPRESS - Install
   ansible.builtin.command:
     cmd: >-
-      docker exec -d wordpress:7.1-php8.2-apache 'wp core install
-      --url="https://10.171.62.21"
-      --title="LeSuperSite"
-      --admin_user={{ wp_admin_user }}
-      --admin_password={{ wp_admin_pass }}
-      --admin_email={{ wp_admin_email }}
-      --skip-email'
-  when: wp_installed.rc == 1
-    # no_log: true
+      {{ wp_cli }} core install 
+      --url={{ wp_url | quote }}
+      --title={{ wp_title | quote }}
+      --admin_user={{ wp_admin_user | quote }}
+      --admin_password={{ wp_admin_pass | quote }}
+      --admin_email={{ wp_admin_email | quote }}
+      --skip-email
+  when: wp_installed.rc==1
+  no_log: true # Protects the admin data
  
+- name: WORDPRESS - Set site URL
+  ansible.builtin.command:
+    cmd: "{{ wp_cli }} option update {{ item }} {{ wp_url | quote }}"
+  loop:
+    - home
+    - siteurl
+  register: wp_url_update
+  changed_when: "'unchanged' not in wp_url_update.stdout"
+  no_log: true
