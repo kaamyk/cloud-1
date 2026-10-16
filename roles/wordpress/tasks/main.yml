@@ -1,11 +1,11 @@
-- name: WORDPRESS - Wait for MySQL
-  ansible.builtin.command:
-    cmd: docker exec mysql mysqladmin ping -h localhost
-  register: mysql_ready
-  until: mysql_ready.rc==0
-  retries: 10
-  delay: 3
-  changed_when: false
+# - name: WORDPRESS - Wait for MySQL
+#   ansible.builtin.command:
+#     cmd: docker exec mysql mysqladmin ping -h localhost
+#   register: mysql_ready
+#   until: mysql_ready.rc==0
+#   retries: 10
+#   delay: 3
+#   changed_when: false
 
 - name: WORDPRESS - Lancer le conteneur
   community.docker.docker_container:

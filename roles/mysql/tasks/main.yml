@@ -1,31 +1,23 @@
-- name: Creer dossier config MySQL
-  ansible.builtin.file:
-    path: /opt/app/mysql/conf.d
-    state: directory
-    mode: "0755"
-
-- name: Push SQL config
-  ansible.builtin.template:
-    src: my.cnf.j2
-    dest: /opt/app/mysql/conf.d/my.cnf
-    
-- name: Push SQL init
-  ansible.builtin.template:
-    src: init.sql.j2
-    dest: /
-      
-- name: Install SQL
+- name: MYSQL - Install SQL
   community.docker.docker_container:
     name: mysql
-    image: mysql:9.0
+    image: mysql:8.4
     networks:
       - name: app_net
     volumes:
       - db_data:{{ data_dir }}
-      - /opt/app/mysql/conf.d:/etc/mysql/conf.d:ro
     env:
       MYSQL_ROOT_PASSWORD: "{{ vault_mysql_root_password }}"
       MYSQL_DATABASE: "{{ vault_mysql_database }}"
       MYSQL_USER:  "{{ vault_mysql_user }}"
       MYSQL_PASSWORD: "{{ vault_mysql_user_password }}"
     restart_policy: unless-stopped
+
+- name: MYSQL - Wait for mysql
+  ansible.builtin.command:
+    cmd: docker exec mysql mysqladmin ping -h 127.0.0.1 --protocol=tcp
+  register: mysql_ready
+  until: mysql_ready.rc==0
+  retries: 10
+  delay: 3
+  changed_when: false

@@ -2,5 +2,4 @@
 ---
 # defaults file for roles/docker
 http_port: 80
-siite_name: "Site nginx"
-app_dir: /opt/cloud-1
+site_name: "Site nginx"
