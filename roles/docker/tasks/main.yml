@@ -1,8 +1,36 @@
+- name: DOCKER - Install prerequisites
+  ansible.builtin.apt:
+    name: [ca-certificates, curl, python3-docker]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: DOCKER - Create keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: DOCKER - Download Docker GPG key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+
+- name: DOCKER - Add Docker apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }} signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    filename: docker
+    state: present
+    update_cache: true
+
 - name : DOCKER - Check apt
   ansible.builtin.apt:
     name:
       - python3-apt
-      - aptitude
+      # - aptitude
 
 - name: DOCKER - Installer Docker et le plugin compose
   ansible.builtin.apt:

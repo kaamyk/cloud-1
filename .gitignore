@@ -1,3 +1,4 @@
 **/secret.yml
 .vault_pass
 **/clear.yml
+**/*.pem

@@ -3,4 +3,4 @@ all:
         vm:
           hosts:
             cloud:
-              ansible_host: 10.171.62.21
+              ansible_host: "{{ ip_host }}"
