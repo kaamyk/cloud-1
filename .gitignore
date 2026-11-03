@@ -3,3 +3,4 @@
 **/clear.yml
 **/*.pem
 **/*env.j2
+**/.env

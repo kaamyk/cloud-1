@@ -46,26 +46,6 @@
       update_cache: true
       auto_install_module_deps: true
 
-- name: DOCKER - Create project directory
-  ansible.builtin.file: { path: /opt/cloud1, state: directory, mode: "0755" }
-
-- name: DOCKER - Render compose file and nginx config
-  ansible.builtin.template:
-    src: "{{ item.src }}"
-    dest: "/opt/cloud1/{{ item.dest }}"
-    mode: "{{ item.mode }}"
-  loop:
-    - { src: docker-compose.yml.j2, dest: docker-compose.yml, mode: "0644" }
-    - { src: nginx.conf.j2,         dest: nginx.conf,         mode: "0644" }
-    - { src: env.j2,                dest: .env,               mode: "0600" }
-  no_log: true
-
-- name: DOCKER - Deploy the stack
-  community.docker.docker_compose_v2:
-    project_src: /opt/cloud1
-    state: present
-    pull: missing
-
 - name: DOCKER - Assurer que docker tourne
   ansible.builtin.systemd:
       name: docker
