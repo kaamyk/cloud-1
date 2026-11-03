@@ -1,5 +1,0 @@
-#SPDX-License-Identifier: MIT-0
----
-# defaults file for roles/docker
-http_port: 80
-site_name: "Site nginx"

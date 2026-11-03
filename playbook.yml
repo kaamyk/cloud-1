@@ -4,9 +4,9 @@
   gather_facts: true
   roles:
     - docker
-    - mysql
-    - wordpress
-    - nginx
+    # - mysql
+    # - wordpress
+    # - nginx
  
  
 # - name: Config VM

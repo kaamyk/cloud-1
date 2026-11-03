@@ -2,3 +2,4 @@
 .vault_pass
 **/clear.yml
 **/*.pem
+**/*env.j2
