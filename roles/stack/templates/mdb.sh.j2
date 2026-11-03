@@ -1,0 +1,27 @@
+#!/bin/bash
+mariadb --version
+
+chown -R mysql:mysql /run/mysqld
+chown -R mysql:mysql /var/lib/mysql
+
+if [ ! -d "/var/lib/mysql/mysql" ]; then
+    echo 'database already exists.'
+else
+    mysql_install_db
+
+    cat << EOF > init.sql
+USE mysql;
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'MARIADB_ROOT_PASSWORD';
+FLUSH PRIVILEGES;
+CREATE DATABASE if NOT EXISTS $MARIADB_DATABASE;
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '$MARIADB_ROOT_PASSWORD';
+FLUSH PRIVILEGES;
+CREATE USER IF NOT EXISTS '$MARIADB_USER'@'%' IDENTIFIED BY '$MARIADB_PASSWORD';
+GRANT ALL PRIVILEGES ON $MARIADB_DATABASE.* TO '$MARIADB_USER'@'%';
+FLUSH PRIVILEGES;
+EOF
+
+    mysqld --user=mysql --bootstrap --verbose --skip-name-resolve --skip-networking=0 < init.sql
+fi
+
+exec /usr/sbin/mysqld --user=mysql --console --skip-name-resolve --skip-networking=0 $@
