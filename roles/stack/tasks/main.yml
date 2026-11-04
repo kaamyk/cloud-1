@@ -1,6 +1,35 @@
 - name: NGINX - Create project directory
   ansible.builtin.file: { path: /opt/cloud1, state: directory, mode: "0755" }
 
+- name: TLS - Create certs directory
+  ansible.builtin.file: { path: /opt/cloud1/certs, state: directory, mode: "0700" }
+
+# Self-signed certificate for the VM. `creates` makes it run only once.
+- name: TLS - Generate self-signed certificate
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - req
+      - -x509
+      - -nodes
+      - -newkey
+      - rsa:2048
+      - -days
+      - "365"
+      - -keyout
+      - /opt/cloud1/certs/cloud1.key
+      - -out
+      - /opt/cloud1/certs/cloud1.crt
+      - -subj
+      - "/CN={{ ip_host }}"
+      - -addext
+      - "subjectAltName=IP:{{ ip_host }}"
+    creates: /opt/cloud1/certs/cloud1.crt
+  notify: Restart nginx
+
+- name: TLS - Restrict private key permissions
+  ansible.builtin.file: { path: /opt/cloud1/certs/cloud1.key, mode: "0600" }
+
 - name: NGINX - Render compose file and nginx config
   ansible.builtin.template:
     src: "{{ item.src }}"
@@ -11,7 +40,6 @@
     - { src: docker-compose.yml.j2, dest: docker-compose.yml, mode: "0644" }
     - { src: nginx.conf.j2,         dest: nginx.conf,         mode: "0644" }
     - { src: env.j2,                dest: .env,               mode: "0600" }
-    - { src: wp-config.php.j2,      dest: wp-config.php,      mode: "0644" }
   no_log: true   # .env contains secrets
 
 - name: NGINX - Deploy the stack
@@ -19,8 +47,59 @@
     project_src: /opt/cloud1
     state: present
     pull: missing
+    wait: true
 
 - name: NGINX - Restart nginx
   community.docker.docker_container:
     name: nginx
     restart: true
+
+- name: WP - Check if WordPress is installed
+  ansible.builtin.command:
+    chdir: /opt/cloud1
+    cmd: docker compose run --rm wpcli wp core is-installed
+  register: wp_installed
+  changed_when: false
+  check_mode: false   # read-only, must also run in --check
+  failed_when: wp_installed.rc not in [0, 1]
+  until: wp_installed.rc in [0, 1]
+  retries: 10
+  delay: 5
+
+- name: WP - Install WordPress
+  ansible.builtin.command:
+    chdir: /opt/cloud1
+    argv:
+      - docker
+      - compose
+      - run
+      - --rm
+      - wpcli
+      - wp
+      - core
+      - install
+      - "--url={{ wp_url }}"
+      - "--title={{ wp_title }}"
+      - "--admin_user={{ wp_god }}"
+      - "--admin_password={{ wp_god_password }}"
+      - "--admin_email={{ wp_god_mail }}"
+      - --skip-email
+  when: wp_installed.rc == 1
+  no_log: true
+
+# WordPress stores its URL in the DB. If wp_url changes (http -> https,
+# VM -> AWS), update home/siteurl so WordPress does not redirect to the old one.
+- name: WP - Read current site URL
+  ansible.builtin.command:
+    chdir: /opt/cloud1
+    cmd: docker compose run --rm wpcli wp option get home
+  register: wp_home
+  changed_when: false
+  check_mode: false
+
+- name: WP - Update site URL
+  ansible.builtin.command:
+    chdir: /opt/cloud1
+    argv: [docker, compose, run, --rm, wpcli, wp, option, update, "{{ item }}", "{{ wp_url }}"]
+  loop: [home, siteurl]
+  when: wp_home.stdout != wp_url

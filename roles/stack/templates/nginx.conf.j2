@@ -1,6 +1,19 @@
+# HTTP: only redirects to HTTPS
 server {
     listen 80;
     server_name _;
+
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS: serves WordPress
+server {
+    listen 443 ssl;
+    server_name _;
+
+    ssl_certificate     /etc/nginx/certs/cloud1.crt;
+    ssl_certificate_key /etc/nginx/certs/cloud1.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
 
     root /var/www/html;
     index index.php;
