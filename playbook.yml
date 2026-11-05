@@ -3,37 +3,6 @@
   become: true
   gather_facts: true
   roles:
+    - firewall
     - docker
     - stack
-    # - mysql
-    # - wordpress
-    # - nginx
- 
- 
-# - name: Config VM
-#   hosts: vm
-#   become: true
-#   gather_facts: false
-#   roles:
-#     - vm
-
-# - name: Config Docker
-#   hosts: docker
-#   become: true
-#   gather_facts: false
-#   roles:
-#     - docker
-
-# - name: Configurer le seveur
-#   hosts: webservers
-#   become: true
-#   gather_facts: false
-#   roles:
-#     - nginx_basique
-
-# - name: Configurer SQL
-#   hosts: db
-#   become: true
-#   gather_facts: false
-#   roles:
-#     - mysql

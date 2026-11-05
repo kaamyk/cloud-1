@@ -5,3 +5,5 @@
 **/*env.j2
 **/.env
 CONTEXT.md
+en.subject.txt
+subject-check.txt

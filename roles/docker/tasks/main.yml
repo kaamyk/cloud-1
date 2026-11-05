@@ -30,7 +30,6 @@
   ansible.builtin.apt:
     name:
       - python3-apt
-      # - aptitude
 
 - name: DOCKER - Installer Docker et le plugin compose
   ansible.builtin.apt:
@@ -52,9 +51,3 @@
       state: started
       enabled: true
 
-- name: DOCKER - Creer le reseau
-  community.docker.docker_network:
-    name: app_net
-    driver: bridge
-    state: present
-  register: network

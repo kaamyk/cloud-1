@@ -1,8 +1,8 @@
 - name: NGINX - Create project directory
-  ansible.builtin.file: { path: /opt/cloud1, state: directory, mode: "0755" }
+  ansible.builtin.file: { path: "{{ app_dir }}", state: directory, mode: "0755" }
 
 - name: TLS - Create certs directory
-  ansible.builtin.file: { path: /opt/cloud1/certs, state: directory, mode: "0700" }
+  ansible.builtin.file: { path: "{{ app_dir }}/certs", state: directory, mode: "0700" }
 
 # Self-signed certificate for the VM. `creates` makes it run only once.
 - name: TLS - Generate self-signed certificate
@@ -17,23 +17,29 @@
       - -days
       - "365"
       - -keyout
-      - /opt/cloud1/certs/cloud1.key
+      - "{{ app_dir }}/certs/cloud1.key"
       - -out
-      - /opt/cloud1/certs/cloud1.crt
+      - "{{ app_dir }}/certs/cloud1.crt"
       - -subj
       - "/CN={{ ip_host }}"
       - -addext
       - "subjectAltName=IP:{{ ip_host }}"
-    creates: /opt/cloud1/certs/cloud1.crt
+    creates: "{{ app_dir }}/certs/cloud1.crt"
+  register: tls_cert
   notify: Restart nginx
 
+# In --check mode openssl does not really run, so the key does not exist yet
+# on a fresh host: skip in that case only.
 - name: TLS - Restrict private key permissions
-  ansible.builtin.file: { path: /opt/cloud1/certs/cloud1.key, mode: "0600" }
+  ansible.builtin.file:
+    path: "{{ app_dir }}/certs/cloud1.key"
+    mode: "0600"
+  when: not (ansible_check_mode and tls_cert is changed)
 
 - name: NGINX - Render compose file and nginx config
   ansible.builtin.template:
     src: "{{ item.src }}"
-    dest: "/opt/cloud1/{{ item.dest }}"
+    dest: "{{ app_dir }}/{{ item.dest }}"
     mode: "{{ item.mode }}"
   notify: Restart nginx
   loop:
@@ -44,19 +50,14 @@
 
 - name: NGINX - Deploy the stack
   community.docker.docker_compose_v2:
-    project_src: /opt/cloud1
+    project_src: "{{ app_dir }}"
     state: present
     pull: missing
     wait: true
 
-- name: NGINX - Restart nginx
-  community.docker.docker_container:
-    name: nginx
-    restart: true
-
 - name: WP - Check if WordPress is installed
   ansible.builtin.command:
-    chdir: /opt/cloud1
+    chdir: "{{ app_dir }}"
     cmd: docker compose run --rm wpcli wp core is-installed
   register: wp_installed
   changed_when: false
@@ -68,7 +69,7 @@
 
 - name: WP - Install WordPress
   ansible.builtin.command:
-    chdir: /opt/cloud1
+    chdir: "{{ app_dir }}"
     argv:
       - docker
       - compose
@@ -91,7 +92,7 @@
 # VM -> AWS), update home/siteurl so WordPress does not redirect to the old one.
 - name: WP - Read current site URL
   ansible.builtin.command:
-    chdir: /opt/cloud1
+    chdir: "{{ app_dir }}"
     cmd: docker compose run --rm wpcli wp option get home
   register: wp_home
   changed_when: false
@@ -99,7 +100,7 @@
 
 - name: WP - Update site URL
   ansible.builtin.command:
-    chdir: /opt/cloud1
+    chdir: "{{ app_dir }}"
     argv: [docker, compose, run, --rm, wpcli, wp, option, update, "{{ item }}", "{{ wp_url }}"]
   loop: [home, siteurl]
   when: wp_home.stdout != wp_url
