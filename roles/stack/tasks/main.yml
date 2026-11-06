@@ -21,9 +21,9 @@
       - -out
       - "{{ app_dir }}/certs/cloud1.crt"
       - -subj
-      - "/CN={{ ip_host }}"
+      - "/CN={{ ansible_host }}"
       - -addext
-      - "subjectAltName=IP:{{ ip_host }}"
+      - "subjectAltName=IP:{{ ansible_host }}"
     creates: "{{ app_dir }}/certs/cloud1.crt"
   register: tls_cert
   notify: Restart nginx

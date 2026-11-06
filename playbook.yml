@@ -1,5 +1,5 @@
 - name: Cloud Instance
-  hosts: cloud
+  hosts: all
   become: true
   gather_facts: true
   roles:
