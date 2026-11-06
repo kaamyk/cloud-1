@@ -2,7 +2,6 @@
 .vault_pass
 **/clear.yml
 **/*.pem
-**/*env.j2
 **/.env
 CONTEXT.md
 en.subject.txt
