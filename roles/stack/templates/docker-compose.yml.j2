@@ -32,6 +32,7 @@ services:
     image:  nginx:stable-alpine
     depends_on:
       - wordpress
+      - phpmyadmin
     ports:
       - "80:80"
       - "443:443"
@@ -56,6 +57,22 @@ services:
     env_file:
       - .env
     restart:  always
+
+  # Reached only through nginx (https://<host>/phpmyadmin/), no published port.
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin:5-apache
+    networks:
+      - inception
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PMA_HOST: mysql
+      PMA_ABSOLUTE_URI: "{{ wp_url }}/phpmyadmin/"
+    volumes:
+      - ./pma.config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:ro
+    restart: always
 
   wpcli:
     image: wordpress:cli
