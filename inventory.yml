@@ -4,9 +4,7 @@ all:
           hosts:
             cloud:
               ansible_host: 10.171.62.21
-        vm2:
-          hosts:
-            cloud:
-              ansible_host: 15.188.143.51
         aws:
           hosts:
+            ubuntu:
+              ansible_host: 15.237.179.105
