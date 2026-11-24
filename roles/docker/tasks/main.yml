@@ -26,12 +26,12 @@
     state: present
     update_cache: true
 
-- name : DOCKER - Check apt
+- name : DOCKER - Install Python3-apt
   ansible.builtin.apt:
     name:
       - python3-apt
 
-- name: DOCKER - Installer Docker et le plugin compose
+- name: DOCKER - Install Docker and compose plugin
   ansible.builtin.apt:
       name:
         - ca-certificates
@@ -45,7 +45,7 @@
       update_cache: true
       auto_install_module_deps: true
 
-- name: DOCKER - Assurer que docker tourne
+- name: DOCKER - Ensure docker runs
   ansible.builtin.systemd:
       name: docker
       state: started

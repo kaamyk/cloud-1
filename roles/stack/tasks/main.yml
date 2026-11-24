@@ -43,12 +43,35 @@
 
 
 - name: NGINX - Create project directory
-  ansible.builtin.file: { path: "{{ app_dir }}", state: directory, mode: "0755" }
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: directory
+    mode: "0755"
 
 - name: TLS - Create certs directory
-  ansible.builtin.file: { path: "{{ app_dir }}/certs", state: directory, mode: "0700" }
+  ansible.builtin.file:
+    path: "{{ app_dir }}/certs"
+    state: directory
+    mode: "0700"
 
-# Self-signed certificate for the VM. `creates` makes it run only once.
+# Read-only: which IP is inside the current cert? (rc != 0 if no cert yet)
+- name: TLS - Read current certificate SAN
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - x509
+      - -in
+      - "{{ app_dir }}/certs/cloud1.crt"
+      - -noout
+      - -ext
+      - subjectAltName
+  register: cert_san
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+# Self-signed certificate. (Re)generated only when there is no cert yet or
+# when the IP inside it is not the current ansible_host (IP changed).
 - name: TLS - Generate self-signed certificate
   ansible.builtin.command:
     argv:
@@ -68,17 +91,16 @@
       - "/CN={{ ansible_host }}"
       - -addext
       - "subjectAltName=IP:{{ ansible_host }}"
-    creates: "{{ app_dir }}/certs/cloud1.crt"
-  register: tls_cert
+  when: ("IP Address:" ~ ansible_host) not in (cert_san.stdout_lines | map('trim') | list)
   notify: Restart nginx
 
-# In --check mode openssl does not really run, so the key does not exist yet
-# on a fresh host: skip in that case only.
+# In --check mode openssl does not really run, so on a host without a cert
+# (cert_san.rc != 0) the key does not exist yet: skip in that case only.
 - name: TLS - Restrict private key permissions
   ansible.builtin.file:
     path: "{{ app_dir }}/certs/cloud1.key"
     mode: "0600"
-  when: not (ansible_check_mode and tls_cert is changed)
+  when: not ansible_check_mode or cert_san.rc == 0
 
 - name: NGINX - Render compose file and nginx config
   ansible.builtin.template:

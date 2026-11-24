@@ -7,4 +7,4 @@ all:
         aws:
           hosts:
             ubuntu:
-              ansible_host: 15.237.179.105
+              ansible_host: 15.188.246.31
