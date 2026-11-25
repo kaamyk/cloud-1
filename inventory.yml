@@ -1,10 +1,10 @@
 all:
     children:
-        vm1:
+        cloud221:
           hosts:
             cloud:
-              ansible_host: 10.171.62.21
-        aws:
+              ansible_host: 13.37.226.109
+        cloud1:
           hosts:
             ubuntu:
-              ansible_host: 15.188.246.31
+              ansible_host: 35.180.122.189
