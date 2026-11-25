@@ -3,6 +3,9 @@
   become: true
   gather_facts: true
   roles:
+    - system
     - firewall
     - docker
-    - stack
+    - tls
+    - compose
+    - wordpress

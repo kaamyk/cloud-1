@@ -1,0 +1,44 @@
+# 1 GB instances get OOM-killed (mysql) without swap.
+- name: SWAP - Create file
+  ansible.builtin.command:
+    argv: [fallocate, -l, 2G, /swapfile]
+    creates: /swapfile
+  register: swap_file
+
+# Same guard as the TLS key: in --check the file does not exist yet.
+- name: SWAP - Restrict permissions
+  ansible.builtin.file:
+    path: /swapfile
+    mode: "0600"
+  when: not (ansible_check_mode and swap_file is changed)
+
+# Based on what is really active, not on swap_file: if a previous run
+# stopped after fallocate, this still finishes the job.
+- name: SWAP - Check active swap
+  ansible.builtin.command: swapon --show=NAME --noheadings
+  register: swap_active
+  changed_when: false
+  check_mode: false
+
+- name: SWAP - Format and enable
+  ansible.builtin.shell: mkswap /swapfile && swapon /swapfile
+  when: "'/swapfile' not in swap_active.stdout"
+
+- name: SWAP - Persist across reboots
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    line: /swapfile none swap sw 0 0
+    regexp: '^/swapfile\s'
+
+- name: SWAP - Lower swappiness (config file)
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-swappiness.conf
+    content: "vm.swappiness = 10\n"
+    mode: "0644"
+  register: swappiness
+
+- name: SWAP - Lower swappiness (apply now)
+  ansible.builtin.command: sysctl -p /etc/sysctl.d/99-swappiness.conf
+  when: swappiness is changed
+
+

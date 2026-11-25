@@ -12,7 +12,7 @@ networks:
 services:
   mysql:
     container_name: mysql
-    image: mysql:8.4
+    image: mysql:8.4.13
     volumes:
       - db_data:/var/lib/mysql
     networks:
@@ -29,7 +29,7 @@ services:
         
   nginx:
     container_name: nginx
-    image:  nginx:stable-alpine
+    image: nginx:1.30.8-alpine
     depends_on:
       - wordpress
       - phpmyadmin
@@ -46,7 +46,7 @@ services:
     
   wordpress:
     container_name: wordpress
-    image:  wordpress:6-fpm
+    image: wordpress:6.9.4-fpm
     networks:
       - inception
     depends_on:
@@ -61,7 +61,7 @@ services:
   # Reached only through nginx (https://<host>/phpmyadmin/), no published port.
   phpmyadmin:
     container_name: phpmyadmin
-    image: phpmyadmin:5-apache
+    image: phpmyadmin:5.2.3-apache
     networks:
       - inception
     depends_on:
@@ -75,7 +75,7 @@ services:
     restart: always
 
   wpcli:
-    image: wordpress:cli
+    image: wordpress:cli-2.12.0
     networks:
       - inception
     profiles: ["cli"]

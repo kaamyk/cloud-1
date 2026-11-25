@@ -1,3 +1,11 @@
+- name: SSH - Create config file
+  ansible.builtin.copy:
+    src: 00-hardening.conf.j2
+    dest: "{{ ssh_config_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: UFW - Install
   ansible.builtin.apt:
     name: ufw
