@@ -1,3 +1,15 @@
+- name: WP - Check if WordPress is installed
+  ansible.builtin.command:
+    chdir: "{{ app_dir }}"
+    cmd: docker compose run --rm wpcli wp core is-installed
+  register: wp_installed
+  changed_when: false
+  check_mode: false   # read-only, must also run in --check
+  failed_when: wp_installed.rc not in [0, 1]
+  until: wp_installed.rc in [0, 1]
+  retries: 10
+  delay: 5
+
 - name: WP - Install WordPress
   ansible.builtin.command:
     chdir: "{{ app_dir }}"
@@ -19,6 +31,23 @@
   when: wp_installed.rc == 1
   no_log: true
 
+- name: WP - Delete WordPress Sample comment and page
+  ansible.builtin.command:
+    chdir: "{{ app_dir }}"
+    argv:
+      - docker
+      - compose
+      - run
+      - --rm
+      - wpcli
+      - wp
+      - post
+      - delete 
+      - "{{ item }}"
+      - --force
+  loop: ["1", "2", "3"]
+  when: wp_installed.rc == 1
+
 # WordPress stores its URL in the DB. If wp_url changes (http -> https,
 # VM -> AWS), update home/siteurl so WordPress does not redirect to the old one.
 - name: WP - Read current site URL
@@ -36,14 +65,3 @@
   loop: [home, siteurl]
   when: wp_home.stdout != wp_url
 
-- name: WP - Check if WordPress is installed
-  ansible.builtin.command:
-    chdir: "{{ app_dir }}"
-    cmd: docker compose run --rm wpcli wp core is-installed
-  register: wp_installed
-  changed_when: false
-  check_mode: false   # read-only, must also run in --check
-  failed_when: wp_installed.rc not in [0, 1]
-  until: wp_installed.rc in [0, 1]
-  retries: 10
-  delay: 5

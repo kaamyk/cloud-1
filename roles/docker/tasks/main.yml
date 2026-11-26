@@ -26,24 +26,24 @@
     state: present
     update_cache: true
 
-- name : DOCKER - Install Python3-apt
+- name: DOCKER - Install Python3-apt
   ansible.builtin.apt:
     name:
       - python3-apt
 
 - name: DOCKER - Install Docker and compose plugin
   ansible.builtin.apt:
-      name:
-        - ca-certificates
-        - curl
-        - docker-ce
-        - docker-ce-cli
-        - containerd.io
-        - docker-buildx-plugin
-        - docker-compose-plugin
-      state: present
-      update_cache: true
-      auto_install_module_deps: true
+    name:
+      - ca-certificates
+      - curl
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+    auto_install_module_deps: true
 
 - name: DOCKER - Ensure docker runs
   ansible.builtin.systemd:

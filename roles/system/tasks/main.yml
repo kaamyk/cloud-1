@@ -1,3 +1,12 @@
+- name: Wait for cloud-init
+  ansible.builtin.wait_for:
+    path: "/var/lib/cloud/instance/boot-finished"
+
+- name: APT - Update
+  ansible.builtin.apt:
+    update_cache: true
+  changed_when: false
+
 # 1 GB instances get OOM-killed (mysql) without swap.
 - name: SWAP - Create file
   ansible.builtin.command:

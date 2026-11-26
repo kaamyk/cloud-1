@@ -1,17 +1,17 @@
 - name: SSH - Create config file
   ansible.builtin.copy:
-    src: 00-hardening.conf.j2
+    src: 00-hardening.conf
     dest: "{{ ssh_config_file }}"
     owner: root
     group: root
     mode: "0644"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Restart SSH
 
 - name: UFW - Install
   ansible.builtin.apt:
     name: ufw
     state: present
-    update_cache: true
-    cache_valid_time: 3600
 
 - name: UFW - Allow SSH
   community.general.ufw:

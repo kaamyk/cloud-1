@@ -31,8 +31,10 @@ services:
     container_name: nginx
     image: nginx:1.30.8-alpine
     depends_on:
-      - wordpress
-      - phpmyadmin
+      wordpress:
+        condition: service_healthy
+      phpmyadmin:
+        condition: service_started
     ports:
       - "80:80"
       - "443:443"
@@ -57,6 +59,14 @@ services:
     env_file:
       - .env
     restart:  always
+    # On first start the entrypoint copies WordPress into the empty volume,
+    # then writes wp-config.php last: healthy = files are ready for wp-cli.
+    healthcheck:
+      test: ["CMD", "test", "-f", "/var/www/html/wp-config.php"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
   # Reached only through nginx (https://<host>/phpmyadmin/), no published port.
   phpmyadmin:
@@ -84,7 +94,7 @@ services:
       mysql:
         condition: service_healthy
       wordpress:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - wordpress:/var/www/html
     env_file:

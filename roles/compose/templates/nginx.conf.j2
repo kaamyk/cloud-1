@@ -22,6 +22,14 @@ server {
         try_files $uri $uri/ /index.php?$args;
     }
 
+    location = /readme.html {
+        return 404;
+    }
+    
+    location = /license.txt {
+        return 404;
+    }
+
     # phpMyAdmin. "^~" = if this prefix matches, do NOT test the regex
     # locations below; otherwise "~ \.php$" would send /phpmyadmin/*.php
     # to WordPress's php-fpm.
