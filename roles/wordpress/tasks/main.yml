@@ -24,9 +24,9 @@
       - install
       - "--url={{ wp_url }}"
       - "--title={{ wp_title }}"
-      - "--admin_user={{ wp_god }}"
-      - "--admin_password={{ wp_god_password }}"
-      - "--admin_email={{ wp_god_mail }}"
+      - "--admin_user={{ wp_boss }}"
+      - "--admin_password={{ wp_boss_password }}"
+      - "--admin_email={{ wp_boss_mail }}"
       - --skip-email
   when: wp_installed.rc == 1
   no_log: true
